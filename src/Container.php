@@ -5,7 +5,8 @@ namespace Documentation;
 use Exception;
 use ReflectionClass;
 
-class Container {
+class Container
+{
     private static $instances = [];
     private static $bindings = [];
 
