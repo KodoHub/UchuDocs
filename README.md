@@ -1,2 +1,2 @@
-# UchuDocs
+# Uchū Docs
 WIP
