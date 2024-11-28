@@ -8,11 +8,11 @@ on:
 
 jobs:
   phpcs:
-    name: Run PHP Code Sniffer
+    name: Run PHP Code Sniffer and Fixer
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -24,7 +24,7 @@ jobs:
           extensions: mbstring, tokenizer
           tools: composer
 
-      # Cache Composer dependencies to speed up subsequent runs
+      # Cache Composer dependencies
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
@@ -37,14 +37,10 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress
 
-      # Run PHP Code Sniffer
+      # Fix code using PHPCBF
+      - name: Run PHP Code Beautifier and Fixer (PHPCBF)
+        run: vendor/bin/phpcbf --standard=PSR12 src/
+
+      # Verify with PHP Code Sniffer
       - name: Run PHP Code Sniffer
         run: vendor/bin/phpcs --standard=PSR12 src/
-
-      # Upload PHPCS report for inspection (optional)
-      - name: Upload PHPCS Report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: phpcs-report
-          path: phpcs.xml
