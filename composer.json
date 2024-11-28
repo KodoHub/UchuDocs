@@ -1,0 +1,19 @@
+{
+    "name": "kodohub/uchudocs",
+    "description": "Documentations made simple.",
+    "type": "project",
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "erusev/parsedown": "^1.7",
+        "symfony/yaml": "^7.1",
+        "symfony/filesystem": "^7.1",
+        "symfony/dependency-injection": "^7.0",
+        "psr/container": "^2.0",
+        "psr/log": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Documentation\\": "src/"
+        }
+    }
+}
