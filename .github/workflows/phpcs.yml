@@ -20,19 +20,28 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1' # Adjust PHP version based on your project
+          php-version: '8.2'
           extensions: mbstring, tokenizer
           tools: composer
 
+      # Cache Composer dependencies to speed up subsequent runs
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       # Install dependencies
       - name: Install dependencies
-        run: composer install --no-progress --no-suggest
+        run: composer install --no-progress
 
       # Run PHP Code Sniffer
       - name: Run PHP Code Sniffer
         run: vendor/bin/phpcs --standard=PSR12 src/
 
-      # Upload results if needed (optional)
+      # Upload PHPCS report for inspection (optional)
       - name: Upload PHPCS Report
         if: failure()
         uses: actions/upload-artifact@v4
