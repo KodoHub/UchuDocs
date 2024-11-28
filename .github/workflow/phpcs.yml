@@ -1,0 +1,41 @@
+name: PHP Code Sniffer
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  phpcs:
+    name: Run PHP Code Sniffer
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up PHP
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1' # Adjust PHP version based on your project
+          extensions: mbstring, tokenizer
+          tools: composer
+
+      # Install dependencies
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest
+
+      # Run PHP Code Sniffer
+      - name: Run PHP Code Sniffer
+        run: vendor/bin/phpcs --standard=PSR12 src/
+
+      # Upload results if needed (optional)
+      - name: Upload PHPCS Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpcs-report
+          path: phpcs.xml
