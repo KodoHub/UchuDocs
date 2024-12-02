@@ -6,19 +6,19 @@ class Router
 {
     private $routes = [];
     private $namedRoutes = [];
+    private $notFoundHandler;
+
+    public function __construct(callable $notFoundHandler = null) {
+        $this->notFoundHandler = $notFoundHandler ?? [$this, 'default404Handler'];
+    }
 
     /**
      * Register a route with a given method and URL pattern
-     *
-     * @param string $method HTTP method (GET, POST, etc.)
-     * @param string $pattern URL pattern
-     * @param callable $handler Route handler (function or controller action)
-     * @param string|null $name Optional route name for easier reference
      */
-    public function register(string $method, string $pattern, callable $handler, ?string $name = null) {
+    public function register(string $method, string $pattern, callable $handler, ?string $name = null): void {
+        $method = strtoupper($method);
         $this->routes[$method][$this->compilePattern($pattern)] = $handler;
 
-        // Optionally store a named route
         if ($name) {
             $this->namedRoutes[$name] = $pattern;
         }
@@ -26,82 +26,64 @@ class Router
 
     /**
      * Resolve the current request URI and HTTP method to a route
-     *
-     * @param string $requestUri The current request URI
-     * @param string $method The HTTP method (GET, POST, etc.)
-     * @return array Route information or null if no match found
      */
-    public function resolve(string $requestUri, string $method = 'GET'): ?array {
-        // Remove query string
-        $path = parse_url($requestUri, PHP_URL_PATH);
-        $path = trim($path, '/');
+    public function resolve(string $requestUri, string $method = 'GET'): void {
+        $path = trim(parse_url($requestUri, PHP_URL_PATH) ?? '/', '/');
+        $method = strtoupper($method);
 
-        // Check if the route matches the registered routes
+        if (!isset($this->routes[$method])) {
+            ($this->notFoundHandler)();
+            return;
+        }
+
         foreach ($this->routes[$method] as $pattern => $handler) {
             if (preg_match($pattern, $path, $matches)) {
-                // Extract the matched parameters from the URL pattern
                 array_shift($matches);
-                return [
-                    'handler' => $handler,
-                    'params' => $matches
-                ];
+                if (is_callable($handler)) {
+                    call_user_func_array($handler, $matches);
+                    return;
+                } else {
+                    throw new \Exception("Route handler for '$pattern' is not callable.");
+                }
             }
         }
 
-        return [
-            'handler' => 'error404',
-            'params' => []
-        ];
+        ($this->notFoundHandler)();
     }
 
     /**
      * Generate a URL from a named route
-     *
-     * @param string $name Route name
-     * @param array $params Parameters to replace in the route
-     * @return string Generated URL
-     * @throws \Exception If the route does not exist
      */
     public function generateUrl(string $name, array $params = []): string {
         if (!isset($this->namedRoutes[$name])) {
             throw new \Exception("Route with name '$name' not found.");
         }
 
-        // Get the route pattern
         $pattern = $this->namedRoutes[$name];
-
-        // Replace parameters in the route pattern
         foreach ($params as $key => $value) {
             $pattern = str_replace('{' . $key . '}', $value, $pattern);
         }
 
-        return '/' . $pattern;
+        // Check if there are any unmatched placeholders
+        if (preg_match('/\{[a-zA-Z0-9_]+\}/', $pattern)) {
+            throw new \Exception("Missing parameters for route '$name'.");
+        }
+
+        return '/' . ltrim($pattern, '/');
     }
 
     /**
      * Compile a URL pattern into a regular expression
-     *
-     * @param string $pattern URL pattern
-     * @return string Compiled regular expression
      */
     private function compilePattern(string $pattern): string {
-        // Convert dynamic segments (e.g., {id}) into regular expression
-        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $pattern);
-        return '#^' . $pattern . '$#';
+        return '#^' . preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $pattern) . '$#';
     }
 
     /**
-     * Handle a 404 error when no route is found
+     * Default 404 handler
      */
-    public function error404() {
+    private function default404Handler(): void {
         http_response_code(404);
-        echo "Page Not Found";
-    }
-
-    /**
-     * Handle the home route (can be customized as needed)
-     */
-    public function home() {
-        echo "Welcome to the Documentation Home Page!";
+        echo "404 Not Found - The requested page does not exist.";
     }
 }

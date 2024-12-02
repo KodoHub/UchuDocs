@@ -20,7 +20,6 @@
 - `docs/` - Your Markdown-based documentation files.
 - `templates/` - View templates for rendering HTML.
 - `src/` - Core application logic.
-- `public/` - Publicly accessible assets.
 
 ### Example Markdown File
 
