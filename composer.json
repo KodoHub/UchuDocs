@@ -6,7 +6,7 @@
         "php": "^7.4 || ^8.0",
         "erusev/parsedown": "^1.7",
         "symfony/yaml": "^7.2",
-        "symfony/filesystem": "^6.0",
+        "symfony/filesystem": "^7.2",
         "symfony/dependency-injection": "^7.2",
         "psr/container": "^2.0",
         "psr/log": "^3.0"
