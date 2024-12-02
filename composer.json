@@ -5,7 +5,7 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "erusev/parsedown": "^1.7",
-        "symfony/yaml": "^6.0",
+        "symfony/yaml": "^7.2",
         "symfony/filesystem": "^6.0",
         "symfony/dependency-injection": "^6.0",
         "psr/container": "^2.0",
