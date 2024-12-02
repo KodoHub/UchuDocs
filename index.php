@@ -5,7 +5,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Autoload classes
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/src/DocumentationRenderer.php';
 
 use Documentation\Markdown;
 use Documentation\DocumentationRenderer;
@@ -17,7 +18,7 @@ class DocumentationApp {
     private $docsDirectory;
 
     public function __construct() {
-        $this->docsDirectory = __DIR__ . '/../docs/';
+        $this->docsDirectory = __DIR__ . '/docs/';
         $this->renderer = new DocumentationRenderer($this->docsDirectory);
     }
 
@@ -36,11 +37,12 @@ class DocumentationApp {
         }
     }
 
-    private function renderTemplate($content) {
-        include __DIR__ . '/../templates/header.php';
-        include __DIR__ . '/../templates/sidebar.php';
-        echo $content;
-        include __DIR__ . '/../templates/footer.php';
+    private function renderTemplate($pageContent) {
+        // Pass variables to the template
+        $docsDirectory = $this->docsDirectory;
+        
+        // Use a single template file
+        include __DIR__ . '/templates/template.php';
     }
 
     private function renderErrorPage($message) {
@@ -50,5 +52,6 @@ class DocumentationApp {
     }
 }
 
+// Run the application
 $app = new DocumentationApp();
 $app->run();
