@@ -1,5 +1,7 @@
 # Uchū Docs 🚀
 
+[![PHP Code Sniffer](https://github.com/KodoHub/UchuDocs/actions/workflows/phpcs.yml/badge.svg?event=push)](https://github.com/KodoHub/UchuDocs/actions/workflows/phpcs.yml)
+
 **Uchū Docs** is a lightweight and powerful documentation management system built with **pure PHP**, designed for simplicity and flexibility.
 
 ## Features 🌟
