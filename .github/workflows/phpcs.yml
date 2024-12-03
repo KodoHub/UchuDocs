@@ -44,4 +44,4 @@ jobs:
 
       - name: Verify with PHP Code Sniffer
         run: |
-          vendor/bin/phpcs --standard=PSR12 src/ || exit 1
+          vendor/bin/phpcs --standard=phpcs.xml src/ || exit 1
