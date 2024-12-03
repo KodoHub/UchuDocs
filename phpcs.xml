@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ruleset name="CustomRuleset">
+    <rule ref="PSR12">
+        <properties>
+            <property name="lineLength" value="150"/>
+        </properties>
+    </rule>
+</ruleset>
