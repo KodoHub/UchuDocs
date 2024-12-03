@@ -1,0 +1,21 @@
+{
+    "version": "1.0.0",
+    "name": "UchuDocs",
+    "description": "Uchū Docs is a lightweight and powerful documentation management system built with pure PHP, designed for simplicity and flexibility.",
+    "releaseDate": "2024-12-03",
+    "buildNumber": "20241203-001",
+    "environment": "production",
+    "dependencies": {
+        "core": "1.0.0",
+        "renderer": "1.0.0"
+    },
+    "license": {
+        "type": "GPL-3.0",
+        "holder": "KodoHub"
+    },
+    "metadata": {
+        "lastUpdated": "2024-12-03T12:00:00Z",
+        "maintainers": ["Developer"],
+        "repository": "https://github.com/KodoHub/UchuDocs"
+    }
+}
