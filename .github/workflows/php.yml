@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  php-cs-fixer:
+  php-code-style:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,12 +16,19 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: php-cs-fixer
+          tools: phpcs, php-cs-fixer
 
-      - name: Run PHP Code Style Fixer
+      # PHPCS Check with custom ruleset
+      - name: Run PHP CodeSniffer
+        run: |
+          phpcs --standard=phpcs.xml ./src
+
+      # PHP-CS-Fixer with configuration
+      - name: Run PHP-CS-Fixer
         run: |
           php-cs-fixer fix ./src --config=.php-cs-fixer.php --dry-run --diff
 
+      # Optional: Automatically apply and commit fixes
       - name: Commit fixes
         run: |
           if [[ -n $(git status --porcelain) ]]; then
