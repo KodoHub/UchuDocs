@@ -11,6 +11,7 @@ return (new Config())
     ->setRiskyAllowed(true)
     ->setRules([
         '@PSR12' => true,
+        'line_length' => ['line_length' => 150],
         'strict_param' => true,
         'declare_strict_types' => true,
     ])
