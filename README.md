@@ -1,6 +1,6 @@
 # Uchū Docs 🚀
 
-**Uchū Docs** is a lightweight and powerful documentation management system built with **pure PHP** and **Hack**, designed for simplicity and flexibility.
+**Uchū Docs** is a lightweight and powerful documentation management system built with **pure PHP**, designed for simplicity and flexibility.
 
 ## Features 🌟
 
