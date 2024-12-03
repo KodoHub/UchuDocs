@@ -13,45 +13,14 @@ class DocumentationRenderer
 
     public function __construct(string $docsDirectory, ?PluginManager $pluginManager = null)
     {
-        $this->docsDirectory = rtrim($docsDirectory, DIRECTORY_SEPARATOR);
+        // Normalize the directory path and allow relative paths
+        $this->docsDirectory = realpath(rtrim($docsDirectory, DIRECTORY_SEPARATOR)) ?: $docsDirectory;
         $this->markdown = new Markdown();
         $this->pluginManager = $pluginManager ?? new PluginManager();
     }
 
     /**
-     * Render a specific documentation page
-     *
-     * @param string $pageName Name of the page to render
-     * @return string HTML content of the page
-     * @throws \Exception If page cannot be found
-     */
-    public function renderPage(string $pageName): string
-    {
-        // Execute pre-render plugins
-        $this->pluginManager->executePreRenderPlugins($pageName);
-
-        // Locate the corresponding Markdown file
-        $filePath = $this->findMarkdownFile($pageName);
-
-        try {
-            // Read and process the file content
-            $content = file_get_contents($filePath);
-            $content = $this->pluginManager->modifyContent($content, $pageName);
-
-            // Parse the Markdown content into HTML
-            $renderedContent = $this->markdown->parse($content);
-
-            // Execute post-render plugins
-            $this->pluginManager->executePostRenderPlugins($pageName, $renderedContent);
-
-            return $renderedContent;
-        } catch (\Exception $e) {
-            throw new \Exception("Could not render page: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Get a hierarchical list of available pages
+     * Get a hierarchical list of available pages with unique identifiers
      *
      * @return array Hierarchical list of available documentation pages
      */
@@ -61,31 +30,42 @@ class DocumentationRenderer
         $files = $this->getMarkdownFiles();
 
         foreach ($files as $file) {
+            // Get the relative path of the file within the docs directory
             $relativePath = str_replace($this->docsDirectory . DIRECTORY_SEPARATOR, '', $file);
             $relativePath = trim($relativePath, DIRECTORY_SEPARATOR);
 
-            $pathParts = explode(DIRECTORY_SEPARATOR, $relativePath);
-            $filename = basename($pathParts[count($pathParts) - 1], '.md');
+            // Remove the `.md` extension for the page URL
+            $relativePathWithoutExtension = rtrim($relativePath, '.md');
+
+            // Break the path into parts for subdirectories (separate directory and filename)
+            $pathParts = explode(DIRECTORY_SEPARATOR, $relativePathWithoutExtension);
+            $filename = array_pop($pathParts); // The last part is the file name
             $title = $this->getPageTitle($file);
+
+            // Generate a unique identifier by including the full relative path
+            $uniqueIdentifier = str_replace(DIRECTORY_SEPARATOR, '_', $relativePathWithoutExtension);
 
             $current = &$pagesHierarchy['_children'];
 
-            for ($i = 0; $i < count($pathParts) - 1; $i++) {
-                $dir = $pathParts[$i];
-                if (!isset($current[$dir])) {
-                    $current[$dir] = [
-                        '_name' => $dir,
+            // Traverse the path parts and build the hierarchical structure
+            foreach ($pathParts as $dirPart) {
+                if (!isset($current[$dirPart])) {
+                    $current[$dirPart] = [
+                        '_name' => $dirPart,
                         '_children' => []
                     ];
                 }
-                $current = &$current[$dir]['_children'];
+                $current = &$current[$dirPart]['_children'];
             }
 
-            // Generate a route that will dynamically render the page
-            $current[$filename] = [
+            // Encode the unique identifier to ensure URL safety
+            $encodedUniqueIdentifier = urlencode($uniqueIdentifier);
+
+            // Add the page with its unique identifier
+            $current[$uniqueIdentifier] = [
                 '_name' => $filename,
                 '_title' => $title,
-                '_path' => '?page=' . urlencode($filename)
+                '_path' => '/?page=' . $encodedUniqueIdentifier
             ];
         }
 
@@ -99,35 +79,60 @@ class DocumentationRenderer
      * @param int $depth Current depth level
      * @return string HTML content
      */
-public function renderPagesHierarchy(array $hierarchy, int $depth = 0): string
-{
-    if (!isset($hierarchy['_children']) || empty($hierarchy['_children'])) {
-        return '';
-    }
-
-    $html = '<ul class="documentation-menu" data-depth="' . $depth . '">';
-    ksort($hierarchy['_children']);
-
-    foreach ($hierarchy['_children'] as $key => $item) {
-        if (isset($item['_children'])) {
-            $html .= '<li class="menu-directory">';
-            $html .= '<span class="directory-toggle directory-folder">' . htmlspecialchars($item['_name']) . '</span>';
-            $html .= $this->renderPagesHierarchy($item, $depth + 1);
-            $html .= '</li>';
-        } elseif (isset($item['_title'])) {
-            $fileClass = $depth === 0 ? 'menu-item top-level' : 'menu-item sub-directory';
-            $html .= '<li class="' . $fileClass . '">';
-            $html .= '<a href="' . $item['_path'] . '">' . htmlspecialchars($item['_title']) . '</a>';
-            $html .= '</li>';
+    public function renderPagesHierarchy(array $hierarchy, int $depth = 0): string
+    {
+        if (!isset($hierarchy['_children']) || empty($hierarchy['_children'])) {
+            return '';
         }
-    }
 
-    $html .= '</ul>';
-    return $html;
-}
+        $html = '<ul class="documentation-menu" data-depth="' . $depth . '">';
+        ksort($hierarchy['_children']);
+
+        foreach ($hierarchy['_children'] as $key => $item) {
+            if (isset($item['_children'])) {
+                $html .= '<li class="menu-directory">';
+                $html .= '<span class="directory-toggle directory-folder">' . htmlspecialchars($item['_name']) . '</span>';
+                $html .= $this->renderPagesHierarchy($item, $depth + 1);
+                $html .= '</li>';
+            } elseif (isset($item['_title'])) {
+                $fileClass = $depth === 0 ? 'menu-item top-level' : 'menu-item sub-directory';
+                $html .= '<li class="' . $fileClass . '">';
+                $html .= '<a href="' . $item['_path'] . '">' . htmlspecialchars($item['_title']) . '</a>';
+                $html .= '</li>';
+            }
+        }
+
+        $html .= '</ul>';
+        return $html;
+    }
 
     /**
-     * Get all Markdown files in the documentation directory
+     * Render a page by its unique identifier
+     *
+     * @param string $pageIdentifier Unique page identifier
+     * @return string Rendered HTML content
+     * @throws \Exception If the page is not found
+     */
+    public function renderPage(string $pageIdentifier): string
+    {
+        // Convert the unique identifier back to a file path
+        $relativePath = str_replace('_', DIRECTORY_SEPARATOR, $pageIdentifier) . '.md';
+        $filePath = $this->docsDirectory . DIRECTORY_SEPARATOR . $relativePath;
+
+        // Verify the file exists
+        if (!file_exists($filePath)) {
+            throw new \Exception("Page not found: " . $pageIdentifier);
+        }
+
+        // Read the file content
+        $content = file_get_contents($filePath);
+
+        // Use the Markdown parser to convert the content to HTML
+        return $this->markdown->parse($content);
+    }
+
+    /**
+     * Get all Markdown files in the documentation directory and its subdirectories
      *
      * @return array List of Markdown file paths
      */
@@ -158,8 +163,17 @@ public function renderPagesHierarchy(array $hierarchy, int $depth = 0): string
     {
         $files = $this->getMarkdownFiles();
 
+        // Convert the page name back to a potential relative path
+        $pagePath = str_replace('_', DIRECTORY_SEPARATOR, $pageName);
+
+        // Try to match both file name and directory structure
         foreach ($files as $file) {
-            if (basename($file, '.md') === $pageName) {
+            // Compare the full relative path (directory + file) instead of just the base filename
+            $relativePath = str_replace($this->docsDirectory . DIRECTORY_SEPARATOR, '', $file);
+            $relativePath = trim($relativePath, DIRECTORY_SEPARATOR);
+            $filename = rtrim(basename($relativePath), '.md');
+
+            if ($filename === $pagePath || $filename === $pageName) {
                 return $file;
             }
         }
@@ -198,10 +212,16 @@ public function renderPagesHierarchy(array $hierarchy, int $depth = 0): string
 
         foreach ($files as $file) {
             $title = $this->getPageTitle($file);
+            
+            // Get the unique identifier for this file
+            $relativePath = str_replace($this->docsDirectory . DIRECTORY_SEPARATOR, '', $file);
+            $relativePathWithoutExtension = rtrim($relativePath, '.md');
+            $uniqueIdentifier = str_replace(DIRECTORY_SEPARATOR, '_', $relativePathWithoutExtension);
+
             if (stripos($title, $query) !== false) {
                 $matchingPages[] = [
                     'title' => $title,
-                    'path' => '?page=' . urlencode(basename($file, '.md'))
+                    'path' => '?page=' . urlencode($uniqueIdentifier)
                 ];
             }
         }
@@ -211,6 +231,8 @@ public function renderPagesHierarchy(array $hierarchy, int $depth = 0): string
 
     /**
      * Render the sidebar only (this should be static)
+     *
+     * @return string HTML content for the sidebar
      */
     public function renderSidebar(): string
     {
