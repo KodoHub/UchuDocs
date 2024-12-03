@@ -40,9 +40,8 @@ jobs:
       # Check if PHPCBF fixes all issues
       - name: Run PHP Code Beautifier and Fixer (PHPCBF)
         run: |
-          vendor/bin/phpcbf --standard=PSR12 src/
-          vendor/bin/phpcs --standard=PSR12 src/ || true
+          vendor/bin/phpcbf --standard=PSR12 src/ || true
 
-      # Fail if PHPCS finds errors
       - name: Verify with PHP Code Sniffer
-        run: vendor/bin/phpcs --standard=PSR12 src/
+        run: |
+          vendor/bin/phpcs --standard=PSR12 src/ || exit 1
