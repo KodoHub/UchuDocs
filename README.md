@@ -4,7 +4,7 @@
 
 ## Features 🌟
 
-- **Blazing Fast**: Leveraging pure PHP and Hack for optimal performance.
+- **Blazing Fast**: Leveraging pure PHP for optimal performance.
 - **Customizable Design**: Easily adapt the UI to your needs.
 - **Markdown Rendering**: Write and display documentation in Markdown format.
 - **Extensible**: Add custom plugins or modules for additional functionality.
