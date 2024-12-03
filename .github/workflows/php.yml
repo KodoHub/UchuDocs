@@ -1,0 +1,33 @@
+name: PHP Code Style Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  php-cs-fixer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: php-cs-fixer
+
+      - name: Run PHP Code Style Fixer
+        run: |
+          php-cs-fixer fix ./src --config=.php-cs-fixer.php --dry-run --diff
+
+      - name: Commit fixes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            git config --global user.name 'GitHub Action'
+            git config --global user.email 'action@github.com'
+            git add .
+            git commit -m "Apply PHP Code Style fixes"
+            git push
+          fi
