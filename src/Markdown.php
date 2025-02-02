@@ -13,9 +13,10 @@ class Markdown
     private $logger;
     private $useMetadata = false;
 
-    public function __construct(string $cacheDirectory = null, int $cacheTTL = 3600, bool $useMetadata = false) {
+    public function __construct(string $cacheDirectory = null, int $cacheTTL = 3600, bool $useMetadata = false)
+    {
         $this->parsedown = new Parsedown();
-        
+
         $this->parsedown->setMarkupEscaped(true);
         $this->parsedown->setSafeMode(true);
 
@@ -37,7 +38,8 @@ class Markdown
      * @param string $markdownContent Raw Markdown text
      * @return string Parsed HTML content
      */
-    public function parse(string $markdownContent): string {
+    public function parse(string $markdownContent): string
+    {
         return $this->parsedown->text($markdownContent);
     }
 
@@ -48,7 +50,8 @@ class Markdown
      * @return string Parsed HTML content
      * @throws Exception If file cannot be read
      */
-    public function parseFile(string $filePath): string {
+    public function parseFile(string $filePath): string
+    {
         if (!file_exists($filePath)) {
             throw new Exception("Document not found: " . basename($filePath));
         }
@@ -87,7 +90,8 @@ class Markdown
     /**
      * Enable additional Markdown extensions or features
      */
-    private function enableMarkdownExtensions(): void {
+    private function enableMarkdownExtensions(): void
+    {
         // Example of enabling more advanced features
         $this->parsedown->setBreaksEnabled(true);
         $this->parsedown->setUrlsLinked(true);
@@ -99,7 +103,8 @@ class Markdown
      * @param string $content Markdown content
      * @return array Metadata
      */
-    private function extractMetadata(string $content): array {
+    private function extractMetadata(string $content): array 
+    {
         // Example: Simple front matter extraction (YAML or custom header)
         $metadata = [];
 
@@ -117,7 +122,8 @@ class Markdown
      * @param string $content Markdown content
      * @return string Markdown content without metadata
      */
-    private function removeMetadata(string $content): string {
+    private function removeMetadata(string $content): string
+    {
         return preg_replace('/^---\s*\n(.*?)\n---/s', '', $content);
     }
 
@@ -127,7 +133,8 @@ class Markdown
      * @param string $cacheKey Cache key
      * @return string|null Cached content or null if not found
      */
-    private function getCache(string $cacheKey): ?string {
+    private function getCache(string $cacheKey): ?string
+    {
         $cacheFile = $this->cacheDirectory . $cacheKey . '.html';
 
         // Check if cache file exists and is still valid
@@ -144,7 +151,8 @@ class Markdown
      * @param string $cacheKey Cache key
      * @param string $content Content to cache
      */
-    private function setCache(string $cacheKey, string $content): void {
+    private function setCache(string $cacheKey, string $content): void
+    {
         if (!is_dir($this->cacheDirectory)) {
             mkdir($this->cacheDirectory, 0777, true);
         }
@@ -156,7 +164,8 @@ class Markdown
     /**
      * Enable logging for debugging and tracking
      */
-    public function enableLogging(\Psr\Log\LoggerInterface $logger): void {
+    public function enableLogging(\Psr\Log\LoggerInterface $logger): void
+    {
         $this->logger = $logger;
     }
 }
