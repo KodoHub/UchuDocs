@@ -12,7 +12,7 @@ Welcome to Uchū Docs! This project provides a simple, clean way to render Markd
 ## Quick Setup
 1. Clone the repository
 2. Run `composer install`
-3. Configure your web server to point to the `public` directory
+3. Configure your web server to point to the directory used on upload
 4. Start adding Markdown files to the `docs` directory
 
 ## Customization

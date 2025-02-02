@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- PHP 7.4 or higher
+- PHP 8.1 or higher
 - Composer
 - Web Server (Apache, Nginx, etc.)
 
@@ -11,8 +11,8 @@
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/php-docs-site.git
-cd php-docs-site
+git clone https://github.com/kodohub/uchudocs.git
+cd docs
 ```
 
 2. Install dependencies:
@@ -25,7 +25,7 @@ composer install
 
 ### Apache Configuration
 
-Create a `.htaccess` file in the `public` directory:
+Create a `.htaccess` file in the root directory:
 
 ```apache
 RewriteEngine On
@@ -42,7 +42,7 @@ location / {
 }
 ```
 
-4. Point your web server's document root to the `public` directory
+4. Point your web server's document root to the directory used on upload
 
 ## Troubleshooting
 
