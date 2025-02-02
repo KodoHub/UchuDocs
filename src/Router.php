@@ -8,14 +8,16 @@ class Router
     private $namedRoutes = [];
     private $notFoundHandler;
 
-    public function __construct(callable $notFoundHandler = null) {
+    public function __construct(callable $notFoundHandler = null)
+    {
         $this->notFoundHandler = $notFoundHandler ?? [$this, 'default404Handler'];
     }
 
     /**
      * Register a route with a given method and URL pattern
      */
-    public function register(string $method, string $pattern, callable $handler, ?string $name = null): void {
+    public function register(string $method, string $pattern, callable $handler, ?string $name = null): void
+    {
         $method = strtoupper($method);
         $this->routes[$method][$this->compilePattern($pattern)] = $handler;
 
@@ -27,7 +29,8 @@ class Router
     /**
      * Resolve the current request URI and HTTP method to a route
      */
-    public function resolve(string $requestUri, string $method = 'GET'): void {
+    public function resolve(string $requestUri, string $method = 'GET'): void
+    {
         $path = trim(parse_url($requestUri, PHP_URL_PATH) ?? '/', '/');
         $method = strtoupper($method);
 
@@ -54,7 +57,8 @@ class Router
     /**
      * Generate a URL from a named route
      */
-    public function generateUrl(string $name, array $params = []): string {
+    public function generateUrl(string $name, array $params = []): string
+    {
         if (!isset($this->namedRoutes[$name])) {
             throw new \Exception("Route with name '$name' not found.");
         }
@@ -75,14 +79,16 @@ class Router
     /**
      * Compile a URL pattern into a regular expression
      */
-    private function compilePattern(string $pattern): string {
+    private function compilePattern(string $pattern): string
+    {
         return '#^' . preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $pattern) . '$#';
     }
 
     /**
      * Default 404 handler
      */
-    private function default404Handler(): void {
+    private function default404Handler(): void
+    {
         http_response_code(404);
         echo "404 Not Found - The requested page does not exist.";
     }
