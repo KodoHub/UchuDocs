@@ -20,7 +20,8 @@ class PluginManager {
      * @param PluginInterface $plugin Plugin to register
      * @return self
      */
-    public function registerPlugin(PluginInterface $plugin): self {
+    public function registerPlugin(PluginInterface $plugin): self
+    {
         $this->plugins[] = $plugin;
         
         // Sort plugins by priority
@@ -37,7 +38,8 @@ class PluginManager {
      * @param string $interfaceType Fully qualified interface name
      * @return PluginInterface[]
      */
-    public function getPluginsByType(string $interfaceType): array {
+    public function getPluginsByType(string $interfaceType): array
+    {
         return array_filter($this->plugins, function($plugin) use ($interfaceType) {
             return $plugin instanceof $interfaceType;
         });
@@ -50,7 +52,8 @@ class PluginManager {
      * @param string $pageName Name of the page
      * @return string Modified content
      */
-    public function modifyContent(string $content, string $pageName): string {
+    public function modifyContent(string $content, string $pageName): string
+    {
         /** @var ContentModifierPluginInterface $plugin */
         foreach ($this->getPluginsByType(ContentModifierPluginInterface::class) as $plugin) {
             $content = $plugin->modifyContent($content, $pageName);
@@ -64,7 +67,8 @@ class PluginManager {
      * @param string $pageName Name of the page to render
      * @return void
      */
-    public function executePreRenderPlugins(string $pageName): void {
+    public function executePreRenderPlugins(string $pageName): void
+    {
         /** @var PreRenderPluginInterface $plugin */
         foreach ($this->getPluginsByType(PreRenderPluginInterface::class) as $plugin) {
             $plugin->preRender($pageName);
@@ -78,7 +82,8 @@ class PluginManager {
      * @param string $renderedContent Rendered HTML content
      * @return void
      */
-    public function executePostRenderPlugins(string $pageName, string $renderedContent): void {
+    public function executePostRenderPlugins(string $pageName, string $renderedContent): void
+    {
         /** @var PostRenderPluginInterface $plugin */
         foreach ($this->getPluginsByType(PostRenderPluginInterface::class) as $plugin) {
             $plugin->postRender($pageName, $renderedContent);
