@@ -8,7 +8,8 @@ use Documentation\interfaces\{PluginInterface, ContentModifierPluginInterface, P
  * Plugin Manager for documentation system
  * Manages loading, registering, and executing plugins
  */
-class PluginManager {
+class PluginManager
+{
     /**
      * @var PluginInterface[] Registered plugins
      */
