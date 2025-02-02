@@ -16,7 +16,8 @@ class Container
      * @param string $abstract Class or interface name
      * @param string|callable $concrete Concrete class or factory method
      */
-    public static function bind($abstract, $concrete) {
+    public static function bind($abstract, $concrete)
+    {
         self::$bindings[$abstract] = $concrete;
     }
 
@@ -27,7 +28,8 @@ class Container
      * @return object Instance of the requested class
      * @throws Exception
      */
-    public static function get($abstract) {
+    public static function get($abstract)
+    {
         // Check if we already have an instance
         if (isset(self::$instances[$abstract])) {
             return self::$instances[$abstract];
@@ -54,7 +56,8 @@ class Container
      * @return object
      * @throws Exception
      */
-    private static function resolve($class) {
+    private static function resolve($class)
+    {
         // Use Reflection to inspect the class constructor and its dependencies
         $reflection = new ReflectionClass($class);
 
@@ -86,7 +89,8 @@ class Container
      * @param string $abstract Class or interface name
      * @param string|callable $concrete Concrete class or factory method
      */
-    public static function singleton($abstract, $concrete) {
+    public static function singleton($abstract, $concrete)
+    {
         self::$bindings[$abstract] = $concrete;
     }
 }
