@@ -5,7 +5,8 @@ namespace Documentation\interfaces;
 /**
  * Interface for plugins that modify page content
  */
-interface ContentModifierPluginInterface extends PluginInterface {
+interface ContentModifierPluginInterface extends PluginInterface
+{
     /**
      * Modify the content of a documentation page before rendering
      * 
