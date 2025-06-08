@@ -231,7 +231,8 @@ jobs:
         echo "🔨 Testing Docker build process..."
         
         # Build the Docker image from the docker directory
-        docker build -f docker/Dockerfile -t uchudocs-test:latest .
+        # Use the docker directory as build context to fix path issues
+        docker build -f docker/Dockerfile -t uchudocs-test:latest ./docker
         
         if [ $? -eq 0 ]; then
           echo "✅ Docker build successful!"
@@ -245,18 +246,32 @@ jobs:
           container_id=$(docker run -d -p 8080:80 uchudocs-test:latest)
           
           # Wait a moment for container to start
-          sleep 10
+          sleep 15
           
           # Check if container is running
           if docker ps | grep -q $container_id; then
             echo "✅ Container started successfully!"
             
+            # Check container logs for any immediate errors
+            echo "📋 Container logs:"
+            docker logs $container_id
+            
             # Test HTTP response (basic check)
-            if curl -f http://localhost:8080/ > /dev/null 2>&1; then
-              echo "✅ HTTP response test passed!"
-            else
-              echo "⚠️  HTTP response test failed (this might be expected if index.php doesn't exist yet)"
-            fi
+            echo "🌐 Testing HTTP response..."
+            for i in {1..5}; do
+              if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
+                echo "✅ HTTP response test passed!"
+                break
+              else
+                echo "⏳ Attempt $i: Waiting for service to be ready..."
+                if [ $i -eq 5 ]; then
+                  echo "⚠️  HTTP response test failed after 5 attempts (this might be expected if no index file exists yet)"
+                  echo "📋 Container is running but HTTP test failed - checking logs:"
+                  docker logs $container_id
+                fi
+                sleep 3
+              fi
+            done
           else
             echo "❌ Container failed to start"
             docker logs $container_id
@@ -284,6 +299,48 @@ jobs:
         
         if [ $? -eq 0 ]; then
           echo "✅ Docker Compose configuration is valid!"
+          
+          # Test actual compose up/down cycle
+          echo "🧪 Testing Docker Compose up/down cycle..."
+          docker-compose up -d --build
+          
+          # Wait for services to start
+          sleep 20
+          
+          # Check if services are running
+          if docker-compose ps | grep -q "Up"; then
+            echo "✅ Docker Compose services started successfully!"
+            
+            # Show running services
+            echo "📋 Running services:"
+            docker-compose ps
+            
+            # Test HTTP response if web service is available
+            if docker-compose ps | grep -q ":80.*Up"; then
+              echo "🌐 Testing HTTP response via Docker Compose..."
+              for i in {1..3}; do
+                if curl -f -s http://localhost/ > /dev/null 2>&1; then
+                  echo "✅ HTTP response test via Docker Compose passed!"
+                  break
+                else
+                  echo "⏳ Attempt $i: Waiting for compose service to be ready..."
+                  if [ $i -eq 3 ]; then
+                    echo "⚠️  HTTP response test failed (this might be expected if no index file exists yet)"
+                  fi
+                  sleep 5
+                fi
+              done
+            fi
+          else
+            echo "❌ Docker Compose services failed to start"
+            docker-compose logs
+            docker-compose down
+            exit 1
+          fi
+          
+          # Cleanup
+          docker-compose down
+          
         else
           echo "❌ Docker Compose configuration has issues!"
           exit 1
