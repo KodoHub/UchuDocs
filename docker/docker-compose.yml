@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  uchudocs:
+    build: .
+    container_name: uchudocs-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docs:/var/www/html/docs
+      - ./templates:/var/www/html/templates
+      - ./src:/var/www/html/src
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    restart: unless-stopped
+    networks:
+      - uchudocs-network
+
+  # Optional: Add a database if needed in the future
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: uchudocs-db
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: uchudocs
+  #     MYSQL_USER: uchudocs
+  #     MYSQL_PASSWORD: password
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   networks:
+  #     - uchudocs-network
+
+networks:
+  uchudocs-network:
+    driver: bridge
+
+# volumes:
+#   mysql_data:
