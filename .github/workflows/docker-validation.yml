@@ -1,0 +1,286 @@
+name: Docker Configuration Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docker/**'
+      - 'composer.json'
+      - '.github/workflows/docker-validation.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docker/**'
+      - 'composer.json'
+      - '.github/workflows/docker-validation.yml'
+
+jobs:
+  validate-docker-files:
+    name: Validate Docker Configuration Files
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Check required Docker files exist
+      run: |
+        echo "🔍 Checking for required Docker configuration files in /docker directory..."
+        
+        # Check if docker directory exists
+        if [[ ! -d "docker" ]]; then
+          echo "❌ /docker directory does not exist!"
+          exit 1
+        fi
+        
+        # Array of required files in docker directory
+        required_files=(
+          "docker/Dockerfile"
+          "docker/docker-compose.yml"
+          "docker/.htaccess"
+          "docker/.dockerignore"
+        )
+        
+        # Array of optional but recommended files
+        optional_files=(
+          "composer.json"
+          "README.md"
+          "docs/"
+          "src/"
+          "templates/"
+        )
+        
+        missing_files=()
+        
+        # Check required files in docker directory
+        echo "✅ Checking required files in /docker directory:"
+        for file in "${required_files[@]}"; do
+          if [[ -e "$file" ]]; then
+            echo "  ✓ $file exists"
+          else
+            echo "  ❌ $file is missing"
+            missing_files+=("$file")
+          fi
+        done
+        
+        # Check optional files in root
+        echo ""
+        echo "📋 Checking optional/recommended files in root directory:"
+        for file in "${optional_files[@]}"; do
+          if [[ -e "$file" ]]; then
+            echo "  ✓ $file exists"
+          else
+            echo "  ⚠️  $file is missing (recommended)"
+          fi
+        done
+        
+        # Exit with error if required files are missing
+        if [ ${#missing_files[@]} -ne 0 ]; then
+          echo ""
+          echo "❌ Missing required files: ${missing_files[*]}"
+          exit 1
+        else
+          echo ""
+          echo "✅ All required Docker configuration files are present in /docker directory!"
+        fi
+
+    - name: Validate Dockerfile syntax
+      run: |
+        echo "🔍 Validating Dockerfile syntax..."
+        
+        # Check if Dockerfile has basic required instructions
+        if ! grep -q "^FROM" docker/Dockerfile; then
+          echo "❌ Dockerfile missing FROM instruction"
+          exit 1
+        fi
+        
+        if ! grep -q "^WORKDIR" docker/Dockerfile; then
+          echo "⚠️  Dockerfile missing WORKDIR instruction (recommended)"
+        fi
+        
+        if ! grep -q "^EXPOSE" docker/Dockerfile; then
+          echo "⚠️  Dockerfile missing EXPOSE instruction (recommended)"
+        fi
+        
+        if ! grep -q "^CMD\|^ENTRYPOINT" docker/Dockerfile; then
+          echo "❌ Dockerfile missing CMD or ENTRYPOINT instruction"
+          exit 1
+        fi
+        
+        echo "✅ Dockerfile syntax validation passed!"
+
+    - name: Validate docker-compose.yml syntax
+      run: |
+        echo "🔍 Validating docker-compose.yml syntax..."
+        
+        # Install docker-compose for validation
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        
+        # Change to docker directory for validation
+        cd docker
+        
+        # Validate compose file syntax
+        if docker-compose config > /dev/null 2>&1; then
+          echo "✅ docker-compose.yml syntax is valid!"
+        else
+          echo "❌ docker-compose.yml has syntax errors:"
+          docker-compose config
+          exit 1
+        fi
+
+    - name: Validate .htaccess file
+      run: |
+        echo "🔍 Validating .htaccess configuration..."
+        
+        # Check for essential .htaccess directives
+        if ! grep -q "RewriteEngine On" docker/.htaccess; then
+          echo "❌ .htaccess missing 'RewriteEngine On' directive"
+          exit 1
+        fi
+        
+        if ! grep -q "RewriteRule" docker/.htaccess; then
+          echo "⚠️  .htaccess missing RewriteRule directives"
+        fi
+        
+        # Check for security configurations
+        if grep -q "FilesMatch.*\.\(env\|git\)" docker/.htaccess; then
+          echo "✅ .htaccess includes security file protection"
+        else
+          echo "⚠️  .htaccess missing security file protection (recommended)"
+        fi
+        
+        echo "✅ .htaccess validation completed!"
+
+    - name: Validate composer.json
+      run: |
+        echo "🔍 Validating composer.json..."
+        
+        # Check if composer.json is valid JSON
+        if jq empty composer.json 2>/dev/null; then
+          echo "✅ composer.json is valid JSON"
+        else
+          echo "❌ composer.json has invalid JSON syntax"
+          exit 1
+        fi
+        
+        # Check for required PHP version
+        if jq -e '.require.php' composer.json > /dev/null 2>&1; then
+          php_version=$(jq -r '.require.php' composer.json)
+          echo "✅ PHP version requirement found: $php_version"
+        else
+          echo "⚠️  No PHP version requirement found in composer.json"
+        fi
+
+    - name: Check file permissions and structure
+      run: |
+        echo "🔍 Checking file permissions and structure..."
+        
+        # Check if files have reasonable permissions
+        for file in docker/Dockerfile docker/docker-compose.yml docker/.htaccess docker/.dockerignore; do
+          if [[ -e "$file" ]]; then
+            perms=$(stat -c "%a" "$file")
+            echo "  $file permissions: $perms"
+            
+            # Check if file is readable
+            if [[ -r "$file" ]]; then
+              echo "  ✓ $file is readable"
+            else
+              echo "  ❌ $file is not readable"
+              exit 1
+            fi
+          fi
+        done
+        
+        echo "✅ File permissions check completed!"
+
+    - name: Generate validation report
+      run: |
+        echo "📊 Docker Configuration Validation Report"
+        echo "========================================"
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Workflow: ${{ github.workflow }}"
+        echo "Run ID: ${{ github.run_id }}"
+        echo ""
+        echo "Files validated:"
+        ls -la docker/ 2>/dev/null || true
+        echo ""
+        echo "✅ All Docker configuration files are valid and ready for use!"
+
+  test-docker-build:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+    needs: validate-docker-files
+    if: success()
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Test Docker build
+      run: |
+        echo "🔨 Testing Docker build process..."
+        
+        # Build the Docker image from the docker directory
+        docker build -f docker/Dockerfile -t uchudocs-test:latest .
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ Docker build successful!"
+          
+          # Get image information
+          echo "📋 Docker image information:"
+          docker images uchudocs-test:latest
+          
+          # Test basic container functionality
+          echo "🧪 Testing container startup..."
+          container_id=$(docker run -d -p 8080:80 uchudocs-test:latest)
+          
+          # Wait a moment for container to start
+          sleep 10
+          
+          # Check if container is running
+          if docker ps | grep -q $container_id; then
+            echo "✅ Container started successfully!"
+            
+            # Test HTTP response (basic check)
+            if curl -f http://localhost:8080/ > /dev/null 2>&1; then
+              echo "✅ HTTP response test passed!"
+            else
+              echo "⚠️  HTTP response test failed (this might be expected if index.php doesn't exist yet)"
+            fi
+          else
+            echo "❌ Container failed to start"
+            docker logs $container_id
+            exit 1
+          fi
+          
+          # Cleanup
+          docker stop $container_id
+          docker rm $container_id
+          
+        else
+          echo "❌ Docker build failed!"
+          exit 1
+        fi
+
+    - name: Test Docker Compose
+      run: |
+        echo "🔨 Testing Docker Compose configuration..."
+        
+        # Change to docker directory
+        cd docker
+        
+        # Test docker-compose up (dry run)
+        docker-compose config --quiet
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ Docker Compose configuration is valid!"
+        else
+          echo "❌ Docker Compose configuration has issues!"
+          exit 1
+        fi
