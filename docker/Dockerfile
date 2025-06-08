@@ -1,4 +1,3 @@
-# Use PHP 8.1 with Apache as base image
 FROM php:8.1-apache
 
 # Set working directory
@@ -17,41 +16,37 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install \
-    pdo_mysql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    zip
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install Composer
+# Copy composer from official composer image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Enable Apache modules needed for .htaccess
+# Enable Apache modules
 RUN a2enmod rewrite headers expires mime deflate
 
-# Copy .htaccess file
-COPY .htaccess /var/www/html/.htaccess
+# Copy composer files first for better caching
+COPY composer.json composer.lock* ./
+
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev --no-scripts
+
+# Copy application files
+COPY . .
+
+# Copy .htaccess file from docker directory
+COPY docker/.htaccess /var/www/html/.htaccess
 
 # Set proper permissions for Apache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+    && chmod -R 755 /var/www/html \
+    && chmod -R 777 /var/www/html/storage 2>/dev/null || true \
+    && chmod -R 777 /var/www/html/bootstrap/cache 2>/dev/null || true
 
-# Copy application files
-COPY . /var/www/html/
-
-# Install Composer dependencies
-RUN composer install --optimize-autoloader --no-dev
-
-# Create necessary directories with proper permissions
-RUN mkdir -p docs templates src \
-    && chown -R www-data:www-data docs templates src \
-    && chmod -R 755 docs templates src
+# Run any post-install composer scripts
+RUN composer dump-autoload --optimize
 
 # Expose port 80
 EXPOSE 80
 
-# Start Apache in foreground
+# Start Apache
 CMD ["apache2-foreground"]
