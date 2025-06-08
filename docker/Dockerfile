@@ -29,11 +29,11 @@ RUN docker-php-ext-install \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Enable Apache mod_rewrite for clean URLs
-RUN a2enmod rewrite
+# Enable Apache modules needed for .htaccess
+RUN a2enmod rewrite headers expires mime deflate
 
-# Copy Apache configuration
-COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
+# Copy .htaccess file
+COPY .htaccess /var/www/html/.htaccess
 
 # Set proper permissions for Apache
 RUN chown -R www-data:www-data /var/www/html \
