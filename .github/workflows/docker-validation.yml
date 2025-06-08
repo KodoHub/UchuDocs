@@ -230,6 +230,20 @@ jobs:
       run: |
         echo "🔨 Testing Docker build process..."
         
+        # Copy composer.json to docker directory if it exists in root
+        if [[ -f "composer.json" && ! -f "docker/composer.json" ]]; then
+          echo "📋 Copying composer.json to docker directory..."
+          cp composer.json docker/
+        fi
+        
+        # Copy other necessary files to docker directory if they exist in root
+        for file in composer.lock .env.example; do
+          if [[ -f "$file" && ! -f "docker/$file" ]]; then
+            echo "📋 Copying $file to docker directory..."
+            cp "$file" "docker/"
+          fi
+        done
+        
         # Build the Docker image from the docker directory
         # Use the docker directory as build context to fix path issues
         docker build -f docker/Dockerfile -t uchudocs-test:latest ./docker
