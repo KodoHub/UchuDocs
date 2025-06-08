@@ -1,5 +1,8 @@
 name: PHP Code Sniffer
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
