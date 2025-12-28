@@ -52,9 +52,12 @@ COPY LICENSE* ./
 COPY README.md* ./
 COPY SECURITY.md* ./
 
-# Copy .htaccess if it exists
-COPY docker/.htaccess /var/www/html/.htaccess 2>/dev/null || \
-    echo "RewriteEngine On" > /var/www/html/.htaccess
+# Copy .htaccess from docker directory or create a basic one
+RUN if [ -f docker/.htaccess ]; then \
+        cp docker/.htaccess /var/www/html/.htaccess; \
+    else \
+        echo "RewriteEngine On" > /var/www/html/.htaccess; \
+    fi
 
 # Run post-install scripts if needed
 RUN composer run-script --no-interaction post-autoload-dump 2>/dev/null || true
