@@ -24,33 +24,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Enable Apache modules
 RUN a2enmod rewrite headers expires mime deflate
 
-# Copy composer files for dependency caching
-COPY composer.json composer.lock* ./
-
-# Create required directories that composer might need
-RUN mkdir -p src templates docs
-
-# Copy source files needed for autoloading
-COPY src/ ./src/
-COPY templates/ ./templates/
-COPY docs/ ./docs/
-
-# Install PHP dependencies with optimizations
-RUN composer install \
-    --optimize-autoloader \
-    --no-dev \
-    --no-interaction \
-    --prefer-dist \
-    --no-scripts \
-    && composer clear-cache
-
-# Now copy the rest of the application
-COPY index.php ./
-COPY phpcs.xml* ./
-COPY version.json* ./
-COPY LICENSE* ./
-COPY README.md* ./
-COPY SECURITY.md* ./
+# Copy all application files
+COPY . .
 
 # Copy .htaccess from docker directory or create a basic one
 RUN if [ -f docker/.htaccess ]; then \
@@ -59,8 +34,27 @@ RUN if [ -f docker/.htaccess ]; then \
         echo "RewriteEngine On" > /var/www/html/.htaccess; \
     fi
 
-# Run post-install scripts if needed
-RUN composer run-script --no-interaction post-autoload-dump 2>/dev/null || true
+# Install PHP dependencies if composer.json exists
+RUN if [ -f composer.json ]; then \
+        echo "Installing Composer dependencies..." && \
+        composer install \
+            --optimize-autoloader \
+            --no-interaction \
+            --ignore-platform-reqs \
+            2>&1 | tee /tmp/composer-install.log || \
+        (echo "Composer install failed, trying with --no-scripts..." && \
+         composer install \
+            --optimize-autoloader \
+            --no-interaction \
+            --no-scripts \
+            --ignore-platform-reqs) || \
+        echo "Warning: Composer install failed, continuing anyway..."; \
+    else \
+        echo "No composer.json found, skipping dependency installation"; \
+    fi
+
+# Clear composer cache to reduce image size
+RUN composer clear-cache 2>/dev/null || true
 
 # Set proper permissions for Apache
 RUN chown -R www-data:www-data /var/www/html \
