@@ -21,8 +21,9 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 # Copy composer from official composer image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Enable Apache modules
-RUN a2enmod rewrite headers expires mime deflate
+# Enable Apache modules and configure ServerName
+RUN a2enmod rewrite headers expires mime deflate \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Copy all application files
 COPY . .
