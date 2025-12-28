@@ -24,26 +24,46 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Enable Apache modules
 RUN a2enmod rewrite headers expires mime deflate
 
-# Copy composer files first for better caching
+# Copy composer files for dependency caching
 COPY composer.json composer.lock* ./
 
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev --no-scripts
+# Create required directories that composer might need
+RUN mkdir -p src templates docs
 
-# Copy application files
-COPY . .
+# Copy source files needed for autoloading
+COPY src/ ./src/
+COPY templates/ ./templates/
+COPY docs/ ./docs/
 
-# Copy .htaccess file from docker directory
-COPY docker/.htaccess /var/www/html/.htaccess
+# Install PHP dependencies with optimizations
+RUN composer install \
+    --optimize-autoloader \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --no-scripts \
+    && composer clear-cache
+
+# Now copy the rest of the application
+COPY index.php ./
+COPY phpcs.xml* ./
+COPY version.json* ./
+COPY LICENSE* ./
+COPY README.md* ./
+COPY SECURITY.md* ./
+
+# Copy .htaccess if it exists
+COPY docker/.htaccess /var/www/html/.htaccess 2>/dev/null || \
+    echo "RewriteEngine On" > /var/www/html/.htaccess
+
+# Run post-install scripts if needed
+RUN composer run-script --no-interaction post-autoload-dump 2>/dev/null || true
 
 # Set proper permissions for Apache
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 777 /var/www/html/storage 2>/dev/null || true \
     && chmod -R 777 /var/www/html/bootstrap/cache 2>/dev/null || true
-
-# Run any post-install composer scripts
-RUN composer dump-autoload --optimize
 
 # Expose port 80
 EXPOSE 80
