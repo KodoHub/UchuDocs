@@ -355,8 +355,12 @@ jobs:
         echo "⏳ Waiting for container to start..."
         sleep 10
         
-        # Check if container is still running
-        if docker ps | grep -q $container_id; then
+        # Check container status using docker inspect (more reliable than grep)
+        container_status=$(docker inspect -f '{{.State.Running}}' $container_id 2>/dev/null || echo "false")
+        
+        echo "🔍 Container status: $container_status"
+        
+        if [ "$container_status" = "true" ]; then
           echo "✅ Container is running"
           
           # Show container logs
