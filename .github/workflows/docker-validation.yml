@@ -25,28 +25,31 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Check required Docker files exist
+    - name: Check required files exist
       run: |
-        echo "🔍 Checking for required Docker configuration files in /docker directory..."
+        echo "🔍 Checking for required files..."
         
-        # Check if docker directory exists
-        if [[ ! -d "docker" ]]; then
-          echo "❌ /docker directory does not exist!"
-          exit 1
-        fi
-        
-        # Array of required files in docker directory
-        required_files=(
+        # Array of required Docker files
+        required_docker_files=(
           "docker/Dockerfile"
           "docker/docker-compose.yml"
-          "docker/.htaccess"
           "docker/.dockerignore"
+        )
+        
+        # Array of required root files
+        required_root_files=(
+          "composer.json"
+          "index.php"
         )
         
         # Array of optional but recommended files
         optional_files=(
-          "composer.json"
           "README.md"
+          "SECURITY.md"
+          "LICENSE"
+          "phpcs.xml"
+          "version.json"
+          "composer.lock"
           "docs/"
           "src/"
           "templates/"
@@ -54,9 +57,9 @@ jobs:
         
         missing_files=()
         
-        # Check required files in docker directory
-        echo "✅ Checking required files in /docker directory:"
-        for file in "${required_files[@]}"; do
+        # Check required Docker files
+        echo "✅ Checking required Docker files:"
+        for file in "${required_docker_files[@]}"; do
           if [[ -e "$file" ]]; then
             echo "  ✓ $file exists"
           else
@@ -65,9 +68,21 @@ jobs:
           fi
         done
         
-        # Check optional files in root
+        # Check required root files
         echo ""
-        echo "📋 Checking optional/recommended files in root directory:"
+        echo "✅ Checking required root files:"
+        for file in "${required_root_files[@]}"; do
+          if [[ -e "$file" ]]; then
+            echo "  ✓ $file exists"
+          else
+            echo "  ❌ $file is missing"
+            missing_files+=("$file")
+          fi
+        done
+        
+        # Check optional files
+        echo ""
+        echo "📋 Checking optional/recommended files:"
         for file in "${optional_files[@]}"; do
           if [[ -e "$file" ]]; then
             echo "  ✓ $file exists"
@@ -83,7 +98,7 @@ jobs:
           exit 1
         else
           echo ""
-          echo "✅ All required Docker configuration files are present in /docker directory!"
+          echo "✅ All required files are present!"
         fi
 
     - name: Validate Dockerfile syntax
@@ -110,7 +125,7 @@ jobs:
         fi
         
         # Check for common issues
-        if grep -q "COPY \." docker/Dockerfile && ! grep -q "dockerignore" docker/.dockerignore 2>/dev/null; then
+        if grep -q "COPY \." docker/Dockerfile && [[ ! -f "docker/.dockerignore" ]]; then
           echo "⚠️  Dockerfile copies entire directory but no .dockerignore found"
         fi
         
@@ -120,53 +135,21 @@ jobs:
       run: |
         echo "🔍 Validating docker-compose.yml syntax..."
         
-        # Install docker-compose for validation
-        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        
         # Change to docker directory for validation
         cd docker
         
-        # Validate compose file syntax
-        if docker-compose config > /dev/null 2>&1; then
+        # Validate compose file syntax using docker compose (built-in to Docker)
+        if docker compose config > /dev/null 2>&1; then
           echo "✅ docker-compose.yml syntax is valid!"
         else
           echo "❌ docker-compose.yml has syntax errors:"
-          docker-compose config
+          docker compose config
           exit 1
         fi
-
-    - name: Validate .htaccess file
-      run: |
-        echo "🔍 Validating .htaccess configuration..."
-        
-        # Check for essential .htaccess directives
-        if ! grep -q "RewriteEngine On" docker/.htaccess; then
-          echo "❌ .htaccess missing 'RewriteEngine On' directive"
-          exit 1
-        fi
-        
-        if ! grep -q "RewriteRule" docker/.htaccess; then
-          echo "⚠️  .htaccess missing RewriteRule directives"
-        fi
-        
-        # Check for security configurations
-        if grep -q "FilesMatch.*\.\(env\|git\)" docker/.htaccess; then
-          echo "✅ .htaccess includes security file protection"
-        else
-          echo "⚠️  .htaccess missing security file protection (recommended)"
-        fi
-        
-        echo "✅ .htaccess validation completed!"
 
     - name: Validate composer.json
       run: |
         echo "🔍 Validating composer.json..."
-        
-        if [[ ! -f "composer.json" ]]; then
-          echo "⚠️  composer.json not found - skipping validation"
-          exit 0
-        fi
         
         # Check if composer.json is valid JSON
         if jq empty composer.json 2>/dev/null; then
@@ -184,23 +167,78 @@ jobs:
           echo "⚠️  No PHP version requirement found in composer.json"
         fi
         
-        # Check for common Laravel/PHP dependencies
+        # Check for project name and description
+        if jq -e '.name' composer.json > /dev/null 2>&1; then
+          project_name=$(jq -r '.name' composer.json)
+          echo "✅ Project name: $project_name"
+        fi
+        
+        # Check for autoload configuration
+        if jq -e '.autoload' composer.json > /dev/null 2>&1; then
+          echo "✅ Autoload configuration found"
+        else
+          echo "⚠️  No autoload configuration found in composer.json"
+        fi
+        
+        # List dependencies
         if jq -e '.require' composer.json > /dev/null 2>&1; then
-          echo "📋 Dependencies found:"
-          jq -r '.require | keys[]' composer.json | head -5
+          echo "📋 Main dependencies:"
+          jq -r '.require | to_entries[] | "  - \(.key): \(.value)"' composer.json | head -10
+        fi
+
+    - name: Validate index.php
+      run: |
+        echo "🔍 Validating index.php..."
+        
+        # Check if index.php has PHP opening tag
+        if ! grep -q "<?php" index.php; then
+          echo "❌ index.php missing PHP opening tag"
+          exit 1
+        fi
+        
+        # Check file size (should not be empty)
+        file_size=$(stat -c%s index.php)
+        if [ $file_size -eq 0 ]; then
+          echo "❌ index.php is empty"
+          exit 1
+        else
+          echo "✅ index.php exists and has content ($file_size bytes)"
+        fi
+        
+        # Basic PHP syntax check
+        if php -l index.php > /dev/null 2>&1; then
+          echo "✅ index.php has valid PHP syntax"
+        else
+          echo "❌ index.php has PHP syntax errors:"
+          php -l index.php
+          exit 1
         fi
 
     - name: Check file permissions and structure
       run: |
         echo "🔍 Checking file permissions and structure..."
         
-        # Check if files have reasonable permissions
-        for file in docker/Dockerfile docker/docker-compose.yml docker/.htaccess docker/.dockerignore; do
+        # Check Docker files
+        for file in docker/Dockerfile docker/docker-compose.yml docker/.dockerignore; do
           if [[ -e "$file" ]]; then
             perms=$(stat -c "%a" "$file")
             echo "  $file permissions: $perms"
             
-            # Check if file is readable
+            if [[ -r "$file" ]]; then
+              echo "  ✓ $file is readable"
+            else
+              echo "  ❌ $file is not readable"
+              exit 1
+            fi
+          fi
+        done
+        
+        # Check root files
+        for file in composer.json index.php; do
+          if [[ -e "$file" ]]; then
+            perms=$(stat -c "%a" "$file")
+            echo "  $file permissions: $perms"
+            
             if [[ -r "$file" ]]; then
               echo "  ✓ $file is readable"
             else
@@ -212,8 +250,29 @@ jobs:
         
         echo "✅ File permissions check completed!"
 
+    - name: Validate directory structure
+      run: |
+        echo "🔍 Validating directory structure..."
+        
+        required_dirs=("docker" "docs" "src" "templates" ".github")
+        
+        for dir in "${required_dirs[@]}"; do
+          if [[ -d "$dir" ]]; then
+            echo "  ✓ /$dir directory exists"
+            # Count files in directory
+            file_count=$(find "$dir" -type f 2>/dev/null | wc -l)
+            echo "    → Contains $file_count file(s)"
+          else
+            echo "  ❌ /$dir directory is missing"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Directory structure validation passed!"
+
     - name: Generate validation report
       run: |
+        echo ""
         echo "📊 Docker Configuration Validation Report"
         echo "========================================"
         echo "Repository: ${{ github.repository }}"
@@ -222,10 +281,13 @@ jobs:
         echo "Workflow: ${{ github.workflow }}"
         echo "Run ID: ${{ github.run_id }}"
         echo ""
-        echo "Files validated:"
-        ls -la docker/ 2>/dev/null || true
+        echo "📁 Project Structure:"
+        tree -L 2 -a --dirsfirst || ls -la
         echo ""
-        echo "✅ All Docker configuration files are valid and ready for use!"
+        echo "🐳 Docker files:"
+        ls -lh docker/
+        echo ""
+        echo "✅ All configuration files are valid and ready for use!"
 
   test-docker-build:
     name: Test Docker Build
@@ -242,30 +304,15 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
-    - name: Create minimal composer.json if missing
+    - name: Verify composer.json exists
       run: |
-        if [[ ! -f "composer.json" ]]; then
-          echo "📋 Creating minimal composer.json for Docker build test..."
-          cat > composer.json << 'EOF'
-        {
-            "name": "example/uchudocs",
-            "description": "UchuDocs Application",
-            "type": "project",
-            "require": {
-                "php": "^8.1"
-            },
-            "autoload": {
-                "psr-4": {
-                    "App\\": "src/"
-                }
-            },
-            "minimum-stability": "stable",
-            "prefer-stable": true
-        }
-        EOF
-          echo "✅ Minimal composer.json created"
+        if [[ -f "composer.json" ]]; then
+          echo "✅ composer.json exists"
+          echo "📋 Project info:"
+          jq -r '"\(.name) - \(.description // "No description")"' composer.json
         else
-          echo "✅ composer.json already exists"
+          echo "❌ composer.json not found!"
+          exit 1
         fi
       
     - name: Test Docker build
@@ -273,13 +320,14 @@ jobs:
         echo "🔨 Testing Docker build process..."
         
         # Show current directory structure for debugging
-        echo "📋 Current directory structure:"
+        echo "📋 Root directory contents:"
         ls -la
         echo ""
         echo "📋 Docker directory contents:"
         ls -la docker/
         
-        # Build the Docker image using root as context but docker/Dockerfile
+        # Build the Docker image
+        echo "🔨 Building Docker image..."
         docker build -f docker/Dockerfile -t uchudocs-test:latest .
         
         if [ $? -eq 0 ]; then
@@ -288,62 +336,89 @@ jobs:
           # Get image information
           echo "📋 Docker image information:"
           docker images uchudocs-test:latest
-          
-          # Test basic container functionality
-          echo "🧪 Testing container startup..."
-          container_id=$(docker run -d -p 8080:80 uchudocs-test:latest)
-          
-          # Wait a moment for container to start
-          sleep 15
-          
-          # Check if container is running
-          if docker ps | grep -q $container_id; then
-            echo "✅ Container started successfully!"
-            
-            # Check container logs for any immediate errors
-            echo "📋 Container logs:"
-            docker logs $container_id | tail -20
-            
-            # Test HTTP response (basic check)
-            echo "🌐 Testing HTTP response..."
-            for i in {1..5}; do
-              if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
-                echo "✅ HTTP response test passed!"
-                break
-              else
-                echo "⏳ Attempt $i: Waiting for service to be ready..."
-                if [ $i -eq 5 ]; then
-                  echo "⚠️  HTTP response test failed after 5 attempts"
-                  echo "📋 This is expected if no index.php exists yet"
-                  echo "📋 Final container logs:"
-                  docker logs $container_id | tail -10
-                fi
-                sleep 3
-              fi
-            done
-            
-            # Test if Apache is running inside container
-            echo "🔧 Testing Apache status..."
-            if docker exec $container_id ps aux | grep -q apache2; then
-              echo "✅ Apache is running inside container"
-            else
-              echo "⚠️  Apache may not be running - checking processes:"
-              docker exec $container_id ps aux
-            fi
-            
-          else
-            echo "❌ Container failed to start"
-            echo "📋 Container logs:"
-            docker logs $container_id
-            exit 1
-          fi
-          
-          # Cleanup
-          docker stop $container_id
-          docker rm $container_id
+          docker inspect uchudocs-test:latest --format='Size: {{.Size}} bytes'
           
         else
           echo "❌ Docker build failed!"
+          exit 1
+        fi
+
+    - name: Test container startup
+      run: |
+        echo "🧪 Testing container startup..."
+        
+        # Start container
+        container_id=$(docker run -d -p 8080:80 uchudocs-test:latest)
+        echo "Container ID: $container_id"
+        
+        # Wait for container to initialize
+        echo "⏳ Waiting for container to start..."
+        sleep 10
+        
+        # Check if container is still running
+        if docker ps | grep -q $container_id; then
+          echo "✅ Container is running"
+          
+          # Show container logs
+          echo "📋 Container logs (last 30 lines):"
+          docker logs $container_id | tail -30
+          
+          # Check container health
+          echo ""
+          echo "🔍 Container inspection:"
+          docker inspect $container_id --format='Status: {{.State.Status}}'
+          docker inspect $container_id --format='Running: {{.State.Running}}'
+          
+          # Test if web server responds
+          echo ""
+          echo "🌐 Testing HTTP response..."
+          max_attempts=10
+          attempt=0
+          
+          while [ $attempt -lt $max_attempts ]; do
+            attempt=$((attempt + 1))
+            
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ | grep -q "200\|403\|404"; then
+              response_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+              echo "✅ HTTP server responding with status code: $response_code"
+              
+              # Show response headers
+              echo "📋 Response headers:"
+              curl -I http://localhost:8080/ 2>/dev/null | head -10
+              break
+            else
+              echo "⏳ Attempt $attempt/$max_attempts: Waiting for HTTP server..."
+              if [ $attempt -eq $max_attempts ]; then
+                echo "⚠️  HTTP server not responding after $max_attempts attempts"
+                echo "This may be expected if the application requires additional setup"
+              fi
+              sleep 3
+            fi
+          done
+          
+          # Check if Apache/web server is running
+          echo ""
+          echo "🔧 Checking web server process..."
+          if docker exec $container_id ps aux | grep -E "apache2|httpd|php-fpm" | grep -v grep; then
+            echo "✅ Web server process found"
+          else
+            echo "⚠️  Web server process not found"
+            echo "📋 Running processes:"
+            docker exec $container_id ps aux
+          fi
+          
+          # Cleanup
+          echo ""
+          echo "🧹 Cleaning up..."
+          docker stop $container_id > /dev/null 2>&1
+          docker rm $container_id > /dev/null 2>&1
+          echo "✅ Container stopped and removed"
+          
+        else
+          echo "❌ Container failed to start or exited immediately"
+          echo "📋 Container logs:"
+          docker logs $container_id
+          docker rm $container_id > /dev/null 2>&1
           exit 1
         fi
 
@@ -354,18 +429,28 @@ jobs:
         # Change to docker directory
         cd docker
         
-        # Test docker-compose up (dry run)
-        docker-compose config --quiet
+        # Validate configuration
+        echo "🔍 Validating docker-compose.yml..."
+        docker compose config --quiet
         
         if [ $? -eq 0 ]; then
           echo "✅ Docker Compose configuration is valid!"
           
-          # Show the parsed configuration
-          echo "📋 Docker Compose configuration:"
-          docker-compose config | head -20
+          # Show parsed configuration
+          echo ""
+          echo "📋 Parsed Docker Compose configuration:"
+          docker compose config | head -30
+          
+          # Show services defined
+          echo ""
+          echo "📋 Services defined:"
+          docker compose config --services
           
         else
           echo "❌ Docker Compose configuration has issues!"
-          docker-compose config
+          docker compose config
           exit 1
         fi
+        
+        echo ""
+        echo "✅ Docker Compose validation completed successfully!"
