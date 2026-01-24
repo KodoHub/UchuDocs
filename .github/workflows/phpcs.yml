@@ -5,21 +5,18 @@ permissions:
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
 
 jobs:
   phpcs:
-    name: Run PHP Code Sniffer and Fixer
+    name: Coding Standards (Uchū Docs)
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout code
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up PHP
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -27,24 +24,19 @@ jobs:
           extensions: mbstring, tokenizer
           tools: composer
 
-      # Cache Composer dependencies
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache
+          path: ~/.cache/composer
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
 
-      # Install dependencies
       - name: Install dependencies
-        run: composer install --no-progress --prefer-dist
+        run: composer install --prefer-dist --no-progress --no-interaction
 
-      # Check if PHPCBF fixes all issues
-      - name: Run PHP Code Beautifier and Fixer (PHPCBF)
-        run: |
-          vendor/bin/phpcbf --standard=PSR12 src/ || true
+      - name: Run PHPCBF (auto-fix where possible)
+        run: vendor/bin/phpcbf || true
 
-      - name: Verify with PHP Code Sniffer
-        run: |
-          vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0 src/ || exit 1
+      - name: Run PHPCS (enforce coding standards)
+        run: vendor/bin/phpcs --warning-severity=0
