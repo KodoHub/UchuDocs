@@ -1,8 +1,33 @@
 <?xml version="1.0"?>
-<ruleset name="CustomRuleset">
-    <rule ref="PSR12">
+<ruleset name="Uchū Docs Coding Standard">
+    <description>
+        Coding standards for Uchū Docs – a lightweight pure PHP documentation system.
+    </description>
+
+    <rule ref="PSR12"/>
+
+    <rule ref="Generic.Files.LineLength">
         <properties>
-            <property name="lineLength" value="150"/>
+            <property name="lineLimit" value="150"/>
+            <property name="absoluteLineLimit" value="180"/>
         </properties>
     </rule>
+
+    <file>src</file>
+
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>docs/*</exclude-pattern>
+    <exclude-pattern>templates/*</exclude-pattern>
+
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+    <exclude name="Squiz.Commenting.FunctionComment"/>
+    <exclude name="Squiz.Commenting.ClassComment"/>
+
+    <rule ref="PSR2.Methods.MethodDeclaration">
+        <properties>
+            <property name="allowUnderscore" value="true"/>
+        </properties>
+    </rule>
+
 </ruleset>
