@@ -2,8 +2,9 @@
 
 namespace Documentation;
 
-use Parsedown;
 use Exception;
+use ParsedownExtra;
+use JBZoo\MermaidPHP\Render;
 
 class Markdown
 {
@@ -12,23 +13,22 @@ class Markdown
     private $cacheTTL;
     private $logger;
     private $useMetadata = false;
+    private $mermaidEnabled = true;
+    private $mermaidClass = 'mermaid';
 
     public function __construct(string $cacheDirectory = null, int $cacheTTL = 3600, bool $useMetadata = false)
     {
-        $this->parsedown = new Parsedown();
+        $this->parsedown = new ParsedownExtra();
+        $this->parsedown->setBreaksEnabled(true);
+        $this->parsedown->setUrlsLinked(true);
 
-        $this->parsedown->setMarkupEscaped(true);
-        $this->parsedown->setSafeMode(true);
+        $this->parsedown->setMarkupEscaped(false);
+        $this->parsedown->setSafeMode(false);
 
-        // Enable any additional markdown features if needed
-        // $this->enableMarkdownExtensions();
-
-        // Caching settings
         $this->cacheDirectory = $cacheDirectory ?? __DIR__ . '/../cache/';
         $this->cacheTTL = $cacheTTL;
         $this->useMetadata = $useMetadata;
 
-        // Optional: Logger setup (if needed)
         $this->logger = new \Psr\Log\NullLogger();
     }
 
@@ -40,7 +40,92 @@ class Markdown
      */
     public function parse(string $markdownContent): string
     {
-        return $this->parsedown->text($markdownContent);
+        if ($this->mermaidEnabled) {
+            $markdownContent = $this->processMermaidDiagrams($markdownContent);
+        }
+
+        $previousErrorReporting = error_reporting();
+
+        // Suppress PHP 8.x warnings coming from ParsedownExtra
+        error_reporting(
+            $previousErrorReporting
+            & ~E_DEPRECATED
+            & ~E_WARNING
+            & ~E_NOTICE
+        );
+
+        try {
+            $html = $this->parsedown->text($markdownContent);
+        } finally {
+            error_reporting($previousErrorReporting);
+        }
+
+        $html = preg_replace_callback(
+            '/<pre><code>(.*?)<\/code><\/pre>/s',
+            function ($matches) {
+                $code = htmlspecialchars_decode($matches[1]);
+
+                return '<pre><code class="language-php">'
+                    . htmlspecialchars($code)
+                    . '</code></pre>';
+            },
+            $html
+        );
+
+        return $html;
+    }
+
+    /**
+     * Process Mermaid diagram code blocks and convert them to appropriate HTML
+     * 
+     * @param string $content Markdown content
+     * @return string Processed content with Mermaid diagrams rendered
+     */
+    private function processMermaidDiagrams(string $content): string
+    {
+        $pattern = '/```\s*mermaid\n(.*?)\n```/s';
+
+        return preg_replace_callback($pattern, function ($matches) {
+            $diagramContent = trim($matches[1]);
+
+            try {
+                return sprintf(
+                    '<div class="%s">%s</div>',
+                    htmlspecialchars($this->mermaidClass),
+                    htmlspecialchars($diagramContent)
+                );
+            } catch (Exception $e) {
+                $this->logger->error("Mermaid rendering failed: " . $e->getMessage());
+
+                return sprintf(
+                    '<pre class="%s">%s</pre>',
+                    htmlspecialchars($this->mermaidClass),
+                    htmlspecialchars($diagramContent)
+                );
+            }
+        }, $content);
+    }
+
+    /**
+     * Enable or disable Mermaid diagram processing
+     * 
+     * @param bool $enabled Whether to enable Mermaid processing
+     * @return void
+     */
+    public function setMermaidEnabled(bool $enabled): void
+    {
+        $this->mermaidEnabled = $enabled;
+    }
+
+    /**
+     * Set the CSS class used for Mermaid diagram containers
+     * 
+     * @param string $class CSS class name
+     * @return void
+     */
+    public function setMermaidClass(string $class): void
+    {
+        $this->mermaidClass = $class;
     }
 
     /**
@@ -56,7 +141,6 @@ class Markdown
             throw new Exception("Document not found: " . basename($filePath));
         }
 
-        // Check if the content is cached
         $cacheKey = md5($filePath);
         $cachedContent = $this->getCache($cacheKey);
 
@@ -66,18 +150,15 @@ class Markdown
         }
 
         try {
-            // Read and preprocess file content
             $content = file_get_contents($filePath);
 
             if ($this->useMetadata) {
-                // Extract metadata if needed (e.g., front matter)
                 $metadata = $this->extractMetadata($content);
                 $content = $this->removeMetadata($content);
             }
 
             $parsedContent = $this->parse($content);
 
-            // Cache the parsed content
             $this->setCache($cacheKey, $parsedContent);
 
             return $parsedContent;
@@ -92,7 +173,6 @@ class Markdown
      */
     private function enableMarkdownExtensions(): void
     {
-        // Example of enabling more advanced features
         $this->parsedown->setBreaksEnabled(true);
         $this->parsedown->setUrlsLinked(true);
     }
@@ -103,9 +183,8 @@ class Markdown
      * @param string $content Markdown content
      * @return array Metadata
      */
-    private function extractMetadata(string $content): array 
+    private function extractMetadata(string $content): array
     {
-        // Example: Simple front matter extraction (YAML or custom header)
         $metadata = [];
 
         if (preg_match('/^---\s*\n(.*?)\n---/s', $content, $matches)) {
@@ -137,7 +216,6 @@ class Markdown
     {
         $cacheFile = $this->cacheDirectory . $cacheKey . '.html';
 
-        // Check if cache file exists and is still valid
         if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $this->cacheTTL) {
             return file_get_contents($cacheFile);
         }
@@ -160,7 +238,7 @@ class Markdown
         $cacheFile = $this->cacheDirectory . $cacheKey . '.html';
         file_put_contents($cacheFile, $content);
     }
-    
+
     /**
      * Enable logging for debugging and tracking
      */
