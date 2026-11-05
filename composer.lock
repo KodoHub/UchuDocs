@@ -256,16 +256,16 @@
         },
         {
             "name": "league/commonmark",
-            "version": "2.10.4",
+            "version": "2.10.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/commonmark.git",
-                "reference": "40821b7606d8d946bac57dbd2290076c722e3a65"
+                "reference": "8eb53e906fd60c67038d22f1f1cab420ed58b8be"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/40821b7606d8d946bac57dbd2290076c722e3a65",
-                "reference": "40821b7606d8d946bac57dbd2290076c722e3a65",
+                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/8eb53e906fd60c67038d22f1f1cab420ed58b8be",
+                "reference": "8eb53e906fd60c67038d22f1f1cab420ed58b8be",
                 "shasum": ""
             },
             "require": {
@@ -359,7 +359,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-17T19:59:50+00:00"
+            "time": "2026-10-31T13:35:37+00:00"
         },
         {
             "name": "league/config",
@@ -445,16 +445,16 @@
         },
         {
             "name": "nette/schema",
-            "version": "v1.3.7",
+            "version": "v1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/schema.git",
-                "reference": "c1162897273bf9499ca57924c4688a19d82c9310"
+                "reference": "af9fa8a86bfca9b02b10346220db26e62ef942ec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/schema/zipball/c1162897273bf9499ca57924c4688a19d82c9310",
-                "reference": "c1162897273bf9499ca57924c4688a19d82c9310",
+                "url": "https://api.github.com/repos/nette/schema/zipball/af9fa8a86bfca9b02b10346220db26e62ef942ec",
+                "reference": "af9fa8a86bfca9b02b10346220db26e62ef942ec",
                 "shasum": ""
             },
             "require": {
@@ -462,16 +462,16 @@
                 "php": "8.1 - 8.6"
             },
             "require-dev": {
-                "nette/phpstan-rules": "^1.0",
+                "nette/phpstan-rules": "^1.0.7",
                 "nette/tester": "^2.6",
                 "phpstan/extension-installer": "^1.4@stable",
-                "phpstan/phpstan": "^2.1.39@stable",
+                "phpstan/phpstan": "^2.3@stable",
                 "tracy/tracy": "^2.8"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.3-dev"
+                    "dev-master": "1.4-dev"
                 }
             },
             "autoload": {
@@ -492,23 +492,23 @@
                 {
                     "name": "David Grudl",
                     "homepage": "https://davidgrudl.com"
-                },
-                {
-                    "name": "Nette Community",
-                    "homepage": "https://nette.org/contributors"
                 }
             ],
-            "description": "📐 Nette Schema: validating data structures against a given Schema.",
-            "homepage": "https://nette.org",
+            "description": "📐 Nette Schema: validates and normalizes data such as configuration or API input against a schema described in a few readable lines of PHP, with precise error messages.",
+            "homepage": "https://doc.nette.org/schema",
             "keywords": [
-                "config",
-                "nette"
+                "configuration",
+                "data validation",
+                "nette",
+                "normalization",
+                "schema",
+                "validation"
             ],
             "support": {
                 "issues": "https://github.com/nette/schema/issues",
-                "source": "https://github.com/nette/schema/tree/v1.3.7"
+                "source": "https://github.com/nette/schema/tree/v1.4.0"
             },
-            "time": "2026-10-20T15:46:50+00:00"
+            "time": "2026-10-22T02:12:50+00:00"
         },
         {
             "name": "nette/utils",
@@ -840,16 +840,16 @@
         },
         {
             "name": "symfony/deprecation-contracts",
-            "version": "v3.7.1",
+            "version": "v3.8.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/deprecation-contracts.git",
-                "reference": "f3202fa1b5097b0af062dc978b32ecf63404e31d"
+                "reference": "feb1edf4e546af3b85c5caebe8359a20db230ca3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/f3202fa1b5097b0af062dc978b32ecf63404e31d",
-                "reference": "f3202fa1b5097b0af062dc978b32ecf63404e31d",
+                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/feb1edf4e546af3b85c5caebe8359a20db230ca3",
+                "reference": "feb1edf4e546af3b85c5caebe8359a20db230ca3",
                 "shasum": ""
             },
             "require": {
@@ -862,7 +862,7 @@
                     "name": "symfony/contracts"
                 },
                 "branch-alias": {
-                    "dev-main": "3.7-dev"
+                    "dev-main": "3.8-dev"
                 }
             },
             "autoload": {
@@ -887,7 +887,7 @@
             "description": "A generic function and convention to trigger deprecation notices",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.7.1"
+                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.8.1"
             },
             "funding": [
                 {
@@ -907,7 +907,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-06-05T06:23:12+00:00"
+            "time": "2026-09-16T14:15:10+00:00"
         },
         {
             "name": "symfony/filesystem",
