@@ -11,7 +11,7 @@
         "symfony/dependency-injection": "^7.2",
         "psr/container": "^2.0",
         "psr/log": "^3.0",
-        "jbzoo/mermaid-php": "^7.2.3",
+        "jbzoo/mermaid-php": "^8.0.0",
         "league/commonmark": "^2.10.2"
     },
     "autoload": {
