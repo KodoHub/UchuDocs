@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a016ecc76ab4035edf530a2671fc22f5",
+    "content-hash": "6c0ca1c008bc6dd018e640e641ab2b41",
     "packages": [
         {
             "name": "dflydev/dot-access-data",
@@ -190,29 +190,29 @@
         },
         {
             "name": "jbzoo/mermaid-php",
-            "version": "7.2.6",
+            "version": "8.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/JBZoo/Mermaid-PHP.git",
-                "reference": "969fa14f989bac8235b780291ae816643bad6455"
+                "reference": "2a001856be66717b4c9006e2d88c2d0ff1edf854"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JBZoo/Mermaid-PHP/zipball/969fa14f989bac8235b780291ae816643bad6455",
-                "reference": "969fa14f989bac8235b780291ae816643bad6455",
+                "url": "https://api.github.com/repos/JBZoo/Mermaid-PHP/zipball/2a001856be66717b4c9006e2d88c2d0ff1edf854",
+                "reference": "2a001856be66717b4c9006e2d88c2d0ff1edf854",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "php": "^8.2"
+                "php": "^8.3"
             },
             "require-dev": {
-                "jbzoo/toolbox-dev": "^7.3"
+                "jbzoo/toolbox-dev": "^8.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "7.x-dev"
+                    "dev-master": "8.x-dev"
                 }
             },
             "autoload": {
@@ -240,9 +240,9 @@
             ],
             "support": {
                 "issues": "https://github.com/JBZoo/Mermaid-PHP/issues",
-                "source": "https://github.com/JBZoo/Mermaid-PHP/tree/7.2.6"
+                "source": "https://github.com/JBZoo/Mermaid-PHP/tree/8.0.0"
             },
-            "time": "2026-02-06T17:49:17+00:00"
+            "time": "2026-07-20T19:54:23+00:00"
         },
         {
             "name": "league/commonmark",
