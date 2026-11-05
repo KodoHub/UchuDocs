@@ -8,7 +8,7 @@
         "erusev/parsedown-extra": "^0.9",
         "symfony/yaml": "^7.4",
         "symfony/filesystem": "^7.2",
-        "symfony/dependency-injection": "^7.2",
+        "symfony/dependency-injection": "^8.1",
         "psr/container": "^2.0",
         "psr/log": "^3.0",
         "jbzoo/mermaid-php": "^8.0.0",
