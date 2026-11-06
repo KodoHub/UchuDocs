@@ -34,7 +34,7 @@ class Markdown
 
     /**
      * Parse Markdown content to HTML
-     * 
+     *
      * @param string $markdownContent Raw Markdown text
      * @return string Parsed HTML content
      */
@@ -77,7 +77,7 @@ class Markdown
 
     /**
      * Process Mermaid diagram code blocks and convert them to appropriate HTML
-     * 
+     *
      * @param string $content Markdown content
      * @return string Processed content with Mermaid diagrams rendered
      */
@@ -108,7 +108,7 @@ class Markdown
 
     /**
      * Enable or disable Mermaid diagram processing
-     * 
+     *
      * @param bool $enabled Whether to enable Mermaid processing
      * @return void
      */
@@ -119,7 +119,7 @@ class Markdown
 
     /**
      * Set the CSS class used for Mermaid diagram containers
-     * 
+     *
      * @param string $class CSS class name
      * @return void
      */
@@ -130,7 +130,7 @@ class Markdown
 
     /**
      * Read a Markdown file and parse its contents
-     * 
+     *
      * @param string $filePath Path to the Markdown file
      * @return string Parsed HTML content
      * @throws Exception If file cannot be read
@@ -179,7 +179,7 @@ class Markdown
 
     /**
      * Extract metadata from the markdown content (e.g., front matter)
-     * 
+     *
      * @param string $content Markdown content
      * @return array Metadata
      */
@@ -197,7 +197,7 @@ class Markdown
 
     /**
      * Remove metadata from the markdown content
-     * 
+     *
      * @param string $content Markdown content
      * @return string Markdown content without metadata
      */
@@ -208,7 +208,7 @@ class Markdown
 
     /**
      * Get cached content by key
-     * 
+     *
      * @param string $cacheKey Cache key
      * @return string|null Cached content or null if not found
      */
@@ -225,7 +225,7 @@ class Markdown
 
     /**
      * Set cached content by key
-     * 
+     *
      * @param string $cacheKey Cache key
      * @param string $content Content to cache
      */

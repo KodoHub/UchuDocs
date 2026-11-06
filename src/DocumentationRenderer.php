@@ -212,7 +212,7 @@ class DocumentationRenderer
 
         foreach ($files as $file) {
             $title = $this->getPageTitle($file);
-            
+
             // Get the unique identifier for this file
             $relativePath = str_replace($this->docsDirectory . DIRECTORY_SEPARATOR, '', $file);
             $relativePathWithoutExtension = rtrim($relativePath, '.md');

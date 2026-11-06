@@ -17,16 +17,16 @@ class PluginManager
 
     /**
      * Register a plugin
-     * 
+     *
      * @param PluginInterface $plugin Plugin to register
      * @return self
      */
     public function registerPlugin(PluginInterface $plugin): self
     {
         $this->plugins[] = $plugin;
-        
+
         // Sort plugins by priority
-        usort($this->plugins, function($a, $b) {
+        usort($this->plugins, function ($a, $b) {
             return $a->getPriority() <=> $b->getPriority();
         });
 
@@ -35,20 +35,20 @@ class PluginManager
 
     /**
      * Get all registered plugins of a specific interface type
-     * 
+     *
      * @param string $interfaceType Fully qualified interface name
      * @return PluginInterface[]
      */
     public function getPluginsByType(string $interfaceType): array
     {
-        return array_filter($this->plugins, function($plugin) use ($interfaceType) {
+        return array_filter($this->plugins, function ($plugin) use ($interfaceType) {
             return $plugin instanceof $interfaceType;
         });
     }
 
     /**
      * Apply content modifier plugins
-     * 
+     *
      * @param string $content Original content
      * @param string $pageName Name of the page
      * @return string Modified content
@@ -64,7 +64,7 @@ class PluginManager
 
     /**
      * Execute pre-render plugins
-     * 
+     *
      * @param string $pageName Name of the page to render
      * @return void
      */
@@ -78,7 +78,7 @@ class PluginManager
 
     /**
      * Execute post-render plugins
-     * 
+     *
      * @param string $pageName Name of the rendered page
      * @param string $renderedContent Rendered HTML content
      * @return void

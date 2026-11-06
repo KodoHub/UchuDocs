@@ -12,7 +12,7 @@ class Markdown implements MarkdownInterface
 
     public function parseContent(string $content): string
     {
-        // Basic Markdown parsing 
+        // Basic Markdown parsing
         $html = htmlspecialchars($content);
 
         // Convert headings
