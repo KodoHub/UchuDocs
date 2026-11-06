@@ -36,7 +36,9 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run PHPCBF (auto-fix where possible)
-        run: vendor/bin/phpcbf || true
+        run: |
+          vendor/bin/phpcbf . --extensions=php || true
 
       - name: Run PHPCS (enforce coding standards)
-        run: vendor/bin/phpcs --warning-severity=0
+        run: |
+          vendor/bin/phpcs . --extensions=php --warning-severity=0
