@@ -35,10 +35,14 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Run PHPCBF (auto-fix where possible)
+      - name: Verify PHPCS configuration
         run: |
-          vendor/bin/phpcbf . --extensions=php || true
+          test -d src || {
+            echo "ERROR: src directory does not exist."
+            exit 1
+          }
 
-      - name: Run PHPCS (enforce coding standards)
-        run: |
-          vendor/bin/phpcs . --extensions=php --warning-severity=0
+          find src -type f -name "*.php" -print
+
+      - name: Run PHPCS
+        run: vendor/bin/phpcs src/ --extensions=php --warning-severity=0
