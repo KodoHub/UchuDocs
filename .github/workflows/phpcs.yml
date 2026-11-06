@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -39,88 +37,27 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Verify repository
-        run: |
-          echo "========================================"
-          echo "REPOSITORY INFORMATION"
-          echo "========================================"
-
-          echo "Commit:"
-          git log -1 --oneline
-
-          echo ""
-          echo "Branch:"
-          git branch --show-current
-
-          echo ""
-          echo "Working directory:"
-          pwd
-
-          echo ""
-          echo "Git status:"
-          git status --short
-
       - name: Verify PHP files
         run: |
-          echo "========================================"
-          echo "PHP FILE DISCOVERY"
-          echo "========================================"
-
-          if [ ! -d src ]; then
-            echo "ERROR: src directory does not exist."
-            exit 1
-          fi
-
-          PHP_COUNT=$(find src -type f -name "*.php" | wc -l)
-
-          echo "PHP files discovered: $PHP_COUNT"
-
-          if [ "$PHP_COUNT" -eq 0 ]; then
-            echo "ERROR: No PHP files found in src/."
-            exit 1
-          fi
-
+          test -d src
           find src -type f -name "*.php" -print
 
-      - name: Check committed PHP formatting
-        run: |
-          echo "========================================"
-          echo "SOURCE FORMATTING DIAGNOSTICS"
-          echo "========================================"
-
-          for file in $(find src -type f -name "*.php"); do
-            if grep -nE '[[:blank:]]+$' "$file"; then
-              echo "Trailing whitespace detected in: $file"
-            fi
-          done
-
-          echo ""
-          echo "Checking line endings..."
-
-          for file in $(find src -type f -name "*.php"); do
-            if file "$file" | grep -q "CRLF"; then
-              echo "WARNING: CRLF line endings detected in $file"
-            fi
-          done
-
-      - name: Verify PHPCS configuration
-        run: |
-          echo "========================================"
-          echo "PHPCS INFORMATION"
-          echo "========================================"
-
-          vendor/bin/phpcs --version
-
-          echo ""
-          vendor/bin/phpcs -i
-
-          echo ""
-          vendor/bin/phpcs --config-show
+      - name: Run PHPCBF
+        run: vendor/bin/phpcbf src/ --extensions=php
 
       - name: Run PHPCS
-        run: |
-          vendor/bin/phpcs src/ \
-            --extensions=php \
-            --warning-severity=0 \
-            --colors
+        run: vendor/bin/phpcs src/ --extensions=php --warning-severity=0 --colors
 
+      - name: Check formatting changes
+        if: always()
+        run: |
+          echo "Checking whether PHPCBF modified files..."
+
+          if ! git diff --quiet; then
+            echo "::warning::PHPCBF modified files during this workflow."
+            git diff --stat
+            echo ""
+            echo "Run vendor/bin/phpcbf src/ locally and commit the changes."
+          else
+            echo "No formatting changes required."
+          fi
