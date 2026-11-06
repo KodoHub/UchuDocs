@@ -43,7 +43,7 @@ jobs:
           find src -type f -name "*.php" -print
 
       - name: Run PHPCBF
-        run: vendor/bin/phpcbf src/ --extensions=php
+        run: vendor/bin/phpcbf src/ --extensions=php || true
 
       - name: Run PHPCS
         run: vendor/bin/phpcs src/ --extensions=php --warning-severity=0 --colors
