@@ -17,6 +17,7 @@
     <file>src/</file>
 
     <!-- Excluded directories -->
+    <exclude-pattern>index.php</exclude-pattern>
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/docs/*</exclude-pattern>
     <exclude-pattern>*/templates/*</exclude-pattern>
