@@ -3,7 +3,7 @@
     "description": "Documentations made simple.",
     "type": "project",
     "require": {
-        "php": "^7.4 || ^8.0",
+        "php": "^7.4 || ^8.4",
         "erusev/parsedown": "^1.7",
         "erusev/parsedown-extra": "^0.9",
         "symfony/yaml": "^7.4",
