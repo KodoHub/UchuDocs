@@ -5,7 +5,8 @@ permissions:
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -23,6 +26,7 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, tokenizer
           tools: composer
+          coverage: none
 
       - name: Cache Composer dependencies
         uses: actions/cache@v4
@@ -35,14 +39,88 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Verify PHPCS configuration
+      - name: Verify repository
         run: |
-          test -d src || {
+          echo "========================================"
+          echo "REPOSITORY INFORMATION"
+          echo "========================================"
+
+          echo "Commit:"
+          git log -1 --oneline
+
+          echo ""
+          echo "Branch:"
+          git branch --show-current
+
+          echo ""
+          echo "Working directory:"
+          pwd
+
+          echo ""
+          echo "Git status:"
+          git status --short
+
+      - name: Verify PHP files
+        run: |
+          echo "========================================"
+          echo "PHP FILE DISCOVERY"
+          echo "========================================"
+
+          if [ ! -d src ]; then
             echo "ERROR: src directory does not exist."
             exit 1
-          }
+          fi
+
+          PHP_COUNT=$(find src -type f -name "*.php" | wc -l)
+
+          echo "PHP files discovered: $PHP_COUNT"
+
+          if [ "$PHP_COUNT" -eq 0 ]; then
+            echo "ERROR: No PHP files found in src/."
+            exit 1
+          fi
 
           find src -type f -name "*.php" -print
 
+      - name: Check committed PHP formatting
+        run: |
+          echo "========================================"
+          echo "SOURCE FORMATTING DIAGNOSTICS"
+          echo "========================================"
+
+          for file in $(find src -type f -name "*.php"); do
+            if grep -nE '[[:blank:]]+$' "$file"; then
+              echo "Trailing whitespace detected in: $file"
+            fi
+          done
+
+          echo ""
+          echo "Checking line endings..."
+
+          for file in $(find src -type f -name "*.php"); do
+            if file "$file" | grep -q "CRLF"; then
+              echo "WARNING: CRLF line endings detected in $file"
+            fi
+          done
+
+      - name: Verify PHPCS configuration
+        run: |
+          echo "========================================"
+          echo "PHPCS INFORMATION"
+          echo "========================================"
+
+          vendor/bin/phpcs --version
+
+          echo ""
+          vendor/bin/phpcs -i
+
+          echo ""
+          vendor/bin/phpcs --config-show
+
       - name: Run PHPCS
-        run: vendor/bin/phpcs src/ --extensions=php --warning-severity=0
+        run: |
+          vendor/bin/phpcs src/ \
+            --extensions=php \
+            --warning-severity=0 \
+            --colors
+
