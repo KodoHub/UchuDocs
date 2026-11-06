@@ -1,5 +1,7 @@
 <?php
 
+namespace Documentation;
+
 // Ensure proper error reporting during development
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
