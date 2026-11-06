@@ -13,12 +13,18 @@
         </properties>
     </rule>
 
-    <file>src</file>
+    <!-- Directories to scan -->
+    <file>src/</file>
 
-    <exclude-pattern>vendor/*</exclude-pattern>
-    <exclude-pattern>docs/*</exclude-pattern>
-    <exclude-pattern>templates/*</exclude-pattern>
+    <!-- Excluded directories -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/docs/*</exclude-pattern>
+    <exclude-pattern>*/templates/*</exclude-pattern>
 
-    <exclude name="Squiz.Commenting.FunctionComment"/>
-    <exclude name="Squiz.Commenting.ClassComment"/>
+    <!-- Excluded documentation requirements -->
+    <rule ref="PSR12">
+        <exclude name="Squiz.Commenting.FunctionComment"/>
+        <exclude name="Squiz.Commenting.ClassComment"/>
+    </rule>
+
 </ruleset>
